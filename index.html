@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Community Voice</title>
+<meta name="theme-color" content="#1e4e79">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+Devanagari:wght@400;700&family=Noto+Sans+Bengali:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f3f5f8;--surface:#fff;--text:#1a1a2e;--sec:#556;--primary:#1e4e79;--primary-hover:#163a5f;--border:#dde2e8;--radius:14px;--warn:#fff8e1;--warn-border:#f0c060;--ok:#e8f6ee;--ok-border:#7cc59a;}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter','Noto Sans Devanagari','Noto Sans Bengali',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--border);padding:.8rem 1rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap}
+header h1{margin:0;font-size:1.15rem}
+.controls{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;font-size:.85rem;color:var(--sec)}
+.container{max-width:720px;margin:0 auto;padding:1.2rem 1rem}
+.wide{max-width:1100px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;margin-bottom:1rem;box-shadow:0 4px 16px rgba(0,0,0,.04)}
+.consent{background:var(--warn);border-color:var(--warn-border)}
+.thanks{background:var(--ok);border-color:var(--ok-border);text-align:center}
+h2{margin:0 0 .8rem;font-size:1.1rem}
+.field{margin-bottom:.9rem}
+.field label{display:block;font-weight:700;font-size:.92rem;margin-bottom:.25rem}
+.optional{font-weight:400;color:var(--sec);font-size:.82rem}
+select,textarea,input[type=email],input[type=password]{width:100%;padding:.65rem;border:1px solid var(--border);border-radius:10px;font:inherit;background:#fff;color:inherit}
+textarea{min-height:110px;resize:vertical}
+.controls select{width:auto;padding:.35rem .5rem}
+button{padding:.7rem 1.1rem;border:none;border-radius:10px;font:inherit;font-weight:700;cursor:pointer}
+button:disabled{opacity:.6;cursor:wait}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-ghost{background:#edf0f5;color:var(--text)}
+.btn-green{background:#1f7a45;color:#fff}
+.msg{margin-top:.7rem;font-weight:700;font-size:.9rem}
+.msg.error{color:#c0392b}
+.toolbar{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{border-bottom:1px solid var(--border);padding:.55rem;text-align:left;vertical-align:top}
+th{background:#f0f3f8;white-space:nowrap}
+td.text{white-space:pre-wrap;word-break:break-word;min-width:220px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span data-i18n="title">Community Voice</span></h1>
+  <div class="controls">
+    <label><span data-i18n="language">Language</span>
+      <select id="langSelect" aria-label="Language">
+        <option value="en">English</option>
+        <option value="hi">हिन्दी</option>
+        <option value="as">অসমীয়া</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="showEnglish"> <span data-i18n="showEnglish">Show English too</span></label>
+  </div>
+</header>
+
+<main id="publicView" class="container">
+
+  <section id="consentArea" class="card consent">
+    <h2 data-i18n="consentTitle">Consent</h2>
+    <p data-i18n="consentText"></p>
+    <button class="btn-primary" onclick="giveConsent()" data-i18n="agreeBtn">I understand and agree</button>
+  </section>
+
+  <section id="formArea" class="card hidden">
+    <h2 data-i18n="formTitle">Share Feedback</h2>
+
+    <div class="field">
+      <label for="topic" data-i18n="topicLabel">Topic</label>
+      <select id="topic">
+        <option value="" disabled selected data-i18n="topicPlaceholder">Select topic</option>
+        <option value="water" data-i18n="topicWater">Water</option>
+        <option value="electricity" data-i18n="topicElectricity">Electricity</option>
+        <option value="roads" data-i18n="topicRoads">Roads</option>
+        <option value="waste" data-i18n="topicWaste">Waste</option>
+        <option value="education" data-i18n="topicEducation">Education</option>
+        <option value="health" data-i18n="topicHealth">Health</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="feedback"><span data-i18n="feedbackLabel">Your feedback</span> <span class="optional" data-i18n="feedbackOptional">(any language)</span></label>
+      <textarea id="feedback" maxlength="5000" data-i18n-placeholder="feedbackPlaceholder"></textarea>
+    </div>
+
+    <div class="field">
+      <label for="note"><span data-i18n="noteLabel">English note</span> <span class="optional" data-i18n="noteOptional">(optional)</span></label>
+      <textarea id="note" maxlength="2000" data-i18n-placeholder="notePlaceholder"></textarea>
+    </div>
+
+    <button id="submitBtn" class="btn-primary" onclick="submitEntry()" data-i18n="submitBtn">Submit</button>
+    <div id="formMsg" class="msg"></div>
+  </section>
+
+  <section id="thanksArea" class="card thanks hidden">
+    <h2 data-i18n="thanksText">Thank you! Your feedback has been sent.</h2>
+    <button class="btn-primary" onclick="startOver()" data-i18n="anotherBtn">Submit another response</button>
+  </section>
+
+</main>
+
+<main id="ownerView" class="container wide hidden">
+
+  <section id="loginBox" class="card" style="max-width:420px;margin:2rem auto;">
+    <h2>Owner login</h2>
+    <div class="field"><label for="email">Email</label><input type="email" id="email" autocomplete="username"></div>
+    <div class="field"><label for="password">Password</label><input type="password" id="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')ownerLogin()"></div>
+    <button id="loginBtn" class="btn-primary" onclick="ownerLogin()">Log in</button>
+    <div id="loginMsg" class="msg error"></div>
+  </section>
+
+  <section id="dashboard" class="card hidden">
+    <h2>All records <span id="recordCount" class="optional"></span></h2>
+    <div class="toolbar">
+      <button class="btn-green" onclick="downloadExcel()">⬇ Download Excel (.xlsx)</button>
+      <button class="btn-ghost" onclick="loadRecords()">↻ Refresh</button>
+      <button class="btn-ghost" onclick="ownerLogout()">Log out</button>
+    </div>
+    <div id="dashMsg" class="msg"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Submitted</th><th>Topic</th><th>Language</th><th>Status</th><th>Original feedback</th><th>English note</th></tr></thead>
+        <tbody id="recordRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const SUPABASE_URL = "https://xjsdkyyjcjatsnrzlmit.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_oLyLcnl7A-xps-bP0dhs_Q_qtwnggl1";
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const T = {
+  en: {
+    title:"Community Voice", language:"Language", showEnglish:"Show English too",
+    consentTitle:"Consent",
+    consentText:"Your feedback will be stored online. Only the app owner can see and download it. Please do not write your name, phone number or other personal details. By submitting, you agree to this.",
+    agreeBtn:"I understand and agree",
+    formTitle:"Share Feedback", topicLabel:"Topic", topicPlaceholder:"Select topic",
+    topicWater:"Water", topicElectricity:"Electricity", topicRoads:"Roads", topicWaste:"Waste", topicEducation:"Education", topicHealth:"Health",
+    feedbackLabel:"Your feedback", feedbackOptional:"(any language)", feedbackPlaceholder:"Write here in any language…",
+    noteLabel:"English note", noteOptional:"(optional)", notePlaceholder:"Short English summary, if possible…",
+    submitBtn:"Submit", sending:"Sending…",
+    fillRequired:"Please choose a topic and write your feedback.",
+    sendError:"Could not send. Please check your internet and try again.",
+    thanksText:"Thank you! Your feedback has been sent.", anotherBtn:"Submit another response"
+  },
+  hi: {
+    title:"समुदाय की आवाज़", language:"भाषा", showEnglish:"अंग्रेज़ी भी दिखाएँ",
+    consentTitle:"सहमति",
+    consentText:"आपकी प्रतिक्रिया ऑनलाइन सुरक्षित रखी जाएगी। केवल ऐप के मालिक इसे देख और डाउनलोड कर सकते हैं। कृपया अपना नाम, फ़ोन नंबर या अन्य निजी जानकारी न लिखें। जमा करके आप इसके लिए सहमति देते हैं।",
+    agreeBtn:"मैं समझता/समझती हूँ और सहमत हूँ",
+    formTitle:"प्रतिक्रिया साझा करें", topicLabel:"विषय", topicPlaceholder:"विषय चुनें",
+    topicWater:"पानी", topicElectricity:"बिजली", topicRoads:"सड़कें", topicWaste:"कचरा", topicEducation:"शिक्षा", topicHealth:"स्वास्थ्य",
+    feedbackLabel:"आपकी प्रतिक्रिया", feedbackOptional:"(किसी भी भाषा में)", feedbackPlaceholder:"यहाँ किसी भी भाषा में लिखें…",
+    noteLabel:"अंग्रेज़ी टिप्पणी", noteOptional:"(वैकल्पिक)", notePlaceholder:"हो सके तो संक्षिप्त अंग्रेज़ी सारांश…",
+    submitBtn:"जमा करें", sending:"भेजा जा रहा है…",
+    fillRequired:"कृपया विषय चुनें और अपनी प्रतिक्रिया लिखें।",
+    sendError:"भेजा नहीं जा सका। कृपया इंटरनेट जाँचें और फिर से कोशिश करें।",
+    thanksText:"धन्यवाद! आपकी प्रतिक्रिया भेज दी गई है।", anotherBtn:"एक और प्रतिक्रिया दें"
+  },
+  as: {
+    title:"সম্প্ৰদায়ৰ কণ্ঠ", language:"ভাষা", showEnglish:"ইংৰাজীও দেখুৱাওক",
+    consentTitle:"সন্মতি",
+    consentText:"আপোনাৰ মতামত অনলাইনত সংৰক্ষণ কৰা হ'ব। কেৱল এপৰ গৰাকীয়েহে ইয়াক চাব আৰু ডাউনলোড কৰিব পাৰিব। অনুগ্ৰহ কৰি আপোনাৰ নাম, ফোন নম্বৰ বা আন ব্যক্তিগত তথ্য নিলিখিব। জমা দি আপুনি ইয়াত সন্মতি দিছে।",
+    agreeBtn:"মই বুজি পাইছো আৰু সন্মত",
+    formTitle:"মতামত দিয়ক", topicLabel:"বিষয়", topicPlaceholder:"বিষয় বাছক",
+    topicWater:"পানী", topicElectricity:"বিদ্যুৎ", topicRoads:"পথ", topicWaste:"আৱৰ্জনা", topicEducation:"শিক্ষা", topicHealth:"স্বাস্থ্য",
+    feedbackLabel:"আপোনাৰ মতামত", feedbackOptional:"(যিকোনো ভাষাত)", feedbackPlaceholder:"ইয়াত যিকোনো ভাষাত লিখক…",
+    noteLabel:"ইংৰাজী টোকা", noteOptional:"(ঐচ্ছিক)", notePlaceholder:"সম্ভৱ হ'লে চমু ইংৰাজী সাৰাংশ…",
+    submitBtn:"জমা দিয়ক", sending:"পঠিওৱা হৈছে…",
+    fillRequired:"অনুগ্ৰহ কৰি বিষয় বাছক আৰু আপোনাৰ মতামত লিখক।",
+    sendError:"পঠিয়াব পৰা নগ'ল। অনুগ্ৰহ কৰি ইণ্টাৰনেট পৰীক্ষা কৰি আকৌ চেষ্টা কৰক।",
+    thanksText:"ধন্যবাদ! আপোনাৰ মতামত পঠিওৱা হ'ল।", anotherBtn:"আন এটা মতামত দিয়ক"
+  }
+};
+
+const TOPIC_EN = {water:"Water",electricity:"Electricity",roads:"Roads",waste:"Waste",education:"Education",health:"Health"};
+const LANG_EN = {en:"English",hi:"Hindi",as:"Assamese"};
+
+let lang = localStorage.getItem("cv_lang") || "en";
+let showEng = localStorage.getItem("cv_showEn") === "1";
+let records = [];
+
+function t(key){
+  const local = (T[lang] && T[lang][key]) || T.en[key] || key;
+  if (showEng && lang !== "en" && T.en[key]) return local + " (" + T.en[key] + ")";
+  return local;
+}
+function esc(s){ const d=document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; }
+function show(id, yes){ document.getElementById(id).classList.toggle("hidden", !yes); }
+
+function applyLanguage(){
+  document.documentElement.lang = lang;
+  document.getElementById("langSelect").value = lang;
+  document.getElementById("showEnglish").checked = showEng;
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+}
+
+function giveConsent(){ show("consentArea", false); show("formArea", true); }
+
+function startOver(){
+  document.getElementById("topic").value = "";
+  document.getElementById("feedback").value = "";
+  document.getElementById("note").value = "";
+  document.getElementById("formMsg").textContent = "";
+  show("thanksArea", false); show("formArea", false); show("consentArea", true);
+  window.scrollTo(0, 0);
+}
+
+async function submitEntry(){
+  const topic = document.getElementById("topic").value;
+  const feedback = document.getElementById("feedback").value.trim();
+  const note = document.getElementById("note").value.trim();
+  const msg = document.getElementById("formMsg");
+  const btn = document.getElementById("submitBtn");
+
+  if (!topic || !feedback){ msg.className = "msg error"; msg.textContent = t("fillRequired"); return; }
+
+  btn.disabled = true; msg.className = "msg"; msg.textContent = t("sending");
+  const { error } = await db.from("feedback").insert({ topic, feedback, english_note: note || null, language: lang });
+  btn.disabled = false;
+
+  if (error){ console.error(error); msg.className = "msg error"; msg.textContent = t("sendError"); return; }
+
+  msg.textContent = "";
+  show("formArea", false); show("thanksArea", true);
+  window.scrollTo(0, 0);
+}
+
+async function route(){
+  const isOwner = location.hash === "#owner";
+  show("publicView", !isOwner);
+  show("ownerView", isOwner);
+  if (!isOwner) return;
+  const { data: { session } } = await db.auth.getSession();
+  if (session){ show("loginBox", false); show("dashboard", true); loadRecords(); }
+  else { show("loginBox", true); show("dashboard", false); }
+}
+
+async function ownerLogin(){
+  const btn = document.getElementById("loginBtn");
+  const msg = document.getElementById("loginMsg");
+  btn.disabled = true; msg.textContent = "";
+  const { error } = await db.auth.signInWithPassword({
+    email: document.getElementById("email").value.trim(),
+    password: document.getElementById("password").value
+  });
+  btn.disabled = false;
+  if (error){ msg.textContent = "Login failed: " + error.message; return; }
+  document.getElementById("password").value = "";
+  route();
+}
+
+async function ownerLogout(){
+  await db.auth.signOut();
+  records = [];
+  document.getElementById("recordRows").innerHTML = "";
+  route();
+}
+
+async function fetchAll(){
+  const all = [], size = 1000;
+  for (let from = 0; ; from += size){
+    const { data, error } = await db.from("feedback")
+      .select("id, created_at, topic, status, feedback, english_note, language")
+      .order("created_at", { ascending: false })
+      .range(from, from + size - 1);
+    if (error) throw error;
+    all.push(...data);
+    if (data.length < size) break;
+  }
+  return all;
+}
+
+async function loadRecords(){
+  const msg = document.getElementById("dashMsg");
+  msg.className = "msg"; msg.textContent = "Loading…";
+  try {
+    records = await fetchAll();
+    msg.textContent = records.length ? "" : "No records yet. (If you expected records, check that your User UID is correct in the SQL policy.)";
+  } catch (e){
+    msg.className = "msg error"; msg.textContent = "Could not load records: " + e.message;
+    records = [];
+  }
+  document.getElementById("recordCount").textContent = "(" + records.length + ")";
+  document.getElementById("recordRows").innerHTML = records.map((r, i) => `
+    <tr>
+      <td>${records.length - i}</td>
+      <td>${esc(new Date(r.created_at).toLocaleString())}</td>
+      <td>${esc(TOPIC_EN[r.topic] || r.topic)}</td>
+      <td>${esc(LANG_EN[r.language] || r.language || "")}</td>
+      <td>${esc(r.status)}</td>
+      <td class="text">${esc(r.feedback)}</td>
+      <td class="text">${esc(r.english_note || "")}</td>
+    </tr>`).join("");
+}
+
+function downloadExcel(){
+  if (!records.length){ alert("There are no records to download."); return; }
+  const rows = records.map((r, i) => ({
+    "No.": records.length - i,
+    "Submitted at": new Date(r.created_at).toLocaleString(),
+    "Topic": TOPIC_EN[r.topic] || r.topic,
+    "Form language": LANG_EN[r.language] || r.language || "",
+    "Status": r.status,
+    "Original feedback": r.feedback,
+    "English note": r.english_note || "",
+    "Record ID": r.id
+  }));
+  const sheet = XLSX.utils.json_to_sheet(rows);
+  sheet["!cols"] = [{wch:6},{wch:22},{wch:14},{wch:14},{wch:12},{wch:60},{wch:40},{wch:38}];
+  const book = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(book, sheet, "Feedback");
+  XLSX.writeFile(book, "community-feedback-" + new Date().toISOString().slice(0, 10) + ".xlsx");
+}
+
+document.getElementById("langSelect").addEventListener("change", e => { lang = e.target.value; localStorage.setItem("cv_lang", lang); applyLanguage(); });
+document.getElementById("showEnglish").addEventListener("change", e => { showEng = e.target.checked; localStorage.setItem("cv_showEn", showEng ? "1" : "0"); applyLanguage(); });
+window.addEventListener("hashchange", route);
+applyLanguage();
+route();
+</script>
+</body>
+</html>
